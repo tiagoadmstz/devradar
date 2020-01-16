@@ -1,49 +1,59 @@
 const axios = require('axios');
 const Dev = require('../models/Dev');
-const parseStringAsArray = require('../utils/ParseStringAsArray');
+
+function mountLocation(latitude, longitude){
+    return {
+        type: 'Point',
+        coordinates: [latitude, longitude]
+    };
+}
 
 module.exports = {
-    async index(req, resp) {
+    async index(req, res) {
         const devs = await Dev.find();
 
-        return resp.json(devs);
+        return res.json(devs);
     },
 
-    async store(req, resp) {
+    async store(req, res) {
         const { github_username, techs, latitude, longitude } = req.body;
-    
-        let dev = Dev.findOne({ github_username });
-
+        let dev = await Dev.findOne({ github_username });
+        
         if(!dev){
             const response = await axios.get(`https://api.github.com/users/${github_username}`);
-            
             const { name = login, avatar_url, bio } = response.data;
-        
-            const techsArray = parseStringAsArray(techs);
-        
-            const location = {
-                type: 'Point',
-                coordinates: [longitude, latitude],
-            };
-        
-            const dev = await Dev.create({
-                github_username,
+            dev = await Dev.create({
                 name,
-                avatar_url,
+                github_username,
                 bio,
-                techs: techsArray,
-                location,
+                avatar_url,
+                techs,
+                location: mountLocation(latitude, longitude),
             });
         }
-    
-        return resp.json(dev);
+        return res.json(dev);
     },
 
-    async update(){
-
+    async update(req, res){
+        const { github_username, techs, latitude, longitude } = req.body;
+            const dev = await Dev.findOneAndUpdate({ github_username },
+                { $set: {
+                    techs,
+                    location: mountLocation(latitude, longitude),
+                    }
+                },
+                (err, raw) => {
+                    if(err) return res.status(400).json({ err })
+                }
+            );
+        return !dev ? res.status(404).json({}) : res.json(dev);
     },
 
-    async destroy(){
-
-    },
+    async destroy(req, res){
+        const id = req.params.id;
+        const dev = await Dev.findByIdAndDelete(id, (err, resp) => {
+            if(err) return resp.status(400).json({ err });
+        });
+        return dev ? res.status(204).json() : res.status(404).json();
+    }
 };

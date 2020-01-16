@@ -1,6 +1,8 @@
-const mongoose = require('mongoose');
 const Dev = require('../models/Dev');
-const parseStringAsArray = require('../utils/ParseStringAsArray');
+
+function parseStringAsArray(techs){
+    return techs.split(',').map(tech => tech.trim());
+}
 
 module.exports = {
     async index(req, resp){
