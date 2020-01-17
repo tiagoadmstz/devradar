@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import Header from './Header';
 
 function App() {
-  return (
-    <Header />
-  );
-}
+  const [counter, setCounter] = useState(0);
 
-export default App;
+  function IncrementCounter(){
+    setCounter(counter + 1);
+  }
+
+  return (
+    <>
+      <h1>Contador: {counter}</h1>
+      <button onClick={IncrementCounter}>Incrementar</button>
+    </>
+    );
+  }
+  
+  export default App;
+  
